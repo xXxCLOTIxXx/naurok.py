@@ -18,6 +18,10 @@ class Client(req):
 		self.faker = Faker(names_lang)
 
 
+
+	def __del__(self):
+		self.browser.quit()
+
 	def start_test(self, testId: str, nick: str = None) -> str:
 		self.browser.get(f'{self.url}/test/join?gamecode={testId}')
 		WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.NAME, 'JoinForm[name]')))
