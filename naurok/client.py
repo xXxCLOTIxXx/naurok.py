@@ -13,8 +13,8 @@ from .req import req
 
 class Client(req):
 
-	def __init__(self, names_lang: str = 'ru_RU'):
-		req.__init__(self)
+	def __init__(self, names_lang: str = 'ru_RU', proxy: str = None):
+		req.__init__(self, proxy)
 		self.faker = Faker(names_lang)
 
 
@@ -27,7 +27,7 @@ class Client(req):
 		WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.NAME, 'JoinForm[name]')))
 		username_input = self.browser.find_element("name",'JoinForm[name]')
 		username_input.clear()
-		username_input.send_keys(nick if nick else self.fake.name())
+		username_input.send_keys(nick if nick else self.faker.name())
 		curent = self.browser.current_url
 		username_input.send_keys(Keys.ENTER)
 		id = None

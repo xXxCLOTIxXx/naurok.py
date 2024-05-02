@@ -7,9 +7,15 @@ class req:
 	session = requests.Session()
 	url = "https://naurok.com.ua"
 
-	def __init__(self):
+	def __init__(self, proxy: str = None):
 		opt = Options()
 		opt.add_argument('--headless')
+		if proxy:
+			opt.add_argument('--proxy-server=%s' % proxy)
+			self.session.proxies.update({
+   				'http': proxy,
+    			'https': proxy
+			})
 		self.browser = webdriver.Firefox(opt)
 
 
