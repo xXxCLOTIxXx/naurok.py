@@ -1,39 +1,35 @@
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from faker import Faker
 from bs4 import BeautifulSoup
 from typing import Union, List
+from .exception import *
 
 
 
-from .req import req
+from .req import req, start_headers
 
 
 class Client(req):
 
 	def __init__(self, names_lang: str = 'ru_RU', proxy: str = None):
-		req.__init__(self, proxy)
+		req.__init__(self)
 		self.faker = Faker(names_lang)
 
-
-
-	def __del__(self):
-		self.browser.quit()
-
-	def start_test(self, testId: str, nick: str = None) -> str:
-		self.browser.get(f'{self.url}/test/join?gamecode={testId}')
-		WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.NAME, 'JoinForm[name]')))
-		username_input = self.browser.find_element("name",'JoinForm[name]')
-		username_input.clear()
-		username_input.send_keys(nick if nick else self.faker.name())
-		curent = self.browser.current_url
-		username_input.send_keys(Keys.ENTER)
-		id = None
-		WebDriverWait(self.browser, 10).until(EC.url_changes(self.browser.current_url))
-		if curent != self.browser.current_url:id = self.browser.current_url.split("/")[-1]
-		return id
+	def start_test(self, testLink: str, nick: str = None, json: str = False) -> str:
+		soup = BeautifulSoup(self.session.request("GET", testLink).text, 'html.parser')
+		form = soup.find('form', {'id': 'participate-form-code'})
+		url = form['action'] if form else None
+		data = {
+			'SessionForm[firstname]': nick if nick else self.faker.name()
+		}
+		for input_tag in form.find_all('input'):
+			if input_tag.get('name') and input_tag.get('value'):
+				data[input_tag['name']] = input_tag['value']
+		
+		if url is None: raise LinkError(testLink)
+		result = self.session.post(f"{self.url}{url}", data=data, allow_redirects=True, headers=start_headers(url=url))
+		if result.status_code != 302: raise NotForwarded(testLink)
+		if result.history:
+			return result.history
 
 
 	def end_test(self, sessionId: int, answer_id: Union[str, List[str]] = None, question_id: str = None, points: str = "5", homeworkType = False, homework = False):

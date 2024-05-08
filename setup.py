@@ -34,7 +34,6 @@ setup(
 	],
 	install_requires = [
 		"requests",
-		"selenium",
 		"faker",
 		"bs4"
 	],
